@@ -1,14 +1,20 @@
-
 from app.rag import semantic_search
 
-query = "Saya tidak bisa masuk VPN karena lupa kata sandi"
 
-print("Pertanyaan:", query)
-print("\nHasil pencarian FAQ:")
+def test_semantic_search_returns_results():
+    query = "Saya tidak bisa masuk VPN karena lupa kata sandi"
 
-results = semantic_search(query)
+    results = semantic_search(query)
 
-for result in results:
-    print("FAQ:", result["question"])
-    print("Skor:", round(result["score"], 3))
-    print("-" * 40)
+    # Pastikan hasil pencarian tidak kosong.
+    assert len(results) > 0
+
+    # Pastikan hasil memiliki informasi yang diperlukan.
+    first_result = results[0]
+
+    assert "question" in first_result
+    assert "answer" in first_result
+    assert "score" in first_result
+
+    # Pastikan skor relevansi berupa angka.
+    assert isinstance(first_result["score"], float)

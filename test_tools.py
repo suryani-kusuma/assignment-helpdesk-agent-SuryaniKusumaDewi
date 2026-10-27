@@ -1,10 +1,20 @@
 
 from app.tools import get_ticket_status
 
-# Tes 1: tiket yang tersedia
-print("=== Tes 1: Tiket ditemukan ===")
-print(get_ticket_status("TICKET-0001"))
 
-# Tes 2: tiket yang tidak tersedia
-print("\n=== Tes 2: Tiket tidak ditemukan ===")
-print(get_ticket_status("TICKET-9999"))
+def test_get_ticket_status_existing_ticket():
+    result = get_ticket_status("TICKET-0001")
+
+    # Pastikan tiket ditemukan.
+    assert result is not None
+
+    # Pastikan hasil berisi informasi tiket.
+    assert "TICKET-0001" in str(result)
+
+
+def test_get_ticket_status_missing_ticket():
+    result = get_ticket_status("TICKET-9999")
+
+    # Pastikan aplikasi memberikan informasi tiket tidak ditemukan.
+    assert result is not None
+    assert "tidak ditemukan" in str(result).lower()

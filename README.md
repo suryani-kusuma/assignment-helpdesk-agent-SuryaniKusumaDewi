@@ -80,6 +80,8 @@ it-helpdesk-assignment/
 
 ├── README.md
 
+├── test_error_handling.py
+
 ├── test_semantic_search.py
 
 └── test_tools.py
@@ -196,13 +198,9 @@ Pendekatan ini memastikan informasi status tiket diambil dari sumber data, bukan
 
 ## 8. Backend API
 Aplikasi menyediakan endpoint berikut:
-
 | Endpoint | Method | Fungsi |
-
 |---|---|---|
-
 | `/health` | GET | Memeriksa status aplikasi |
-
 | `/ask` | POST | Memproses pertanyaan pengguna melalui router |
 
 Endpoint `/ask` menerima query dan mengembalikan respons terstruktur dengan field:
@@ -214,6 +212,12 @@ Endpoint `/ask` menerima query dan mengembalikan respons terstruktur dengan fiel
 - `data`: jawaban FAQ, informasi tiket, atau pesan terkait hasil pemrosesan.
 
 Dokumentasi interaktif FastAPI tersedia melalui `/docs` ketika aplikasi berjalan.
+
+### Error Handling
+
+Endpoint `/ask` menggunakan penanganan error dasar untuk mengantisipasi kegagalan saat memproses permintaan. Jika terjadi exception yang tidak tertangani, aplikasi mengembalikan respons terstruktur dengan `status: error`, `intent: unknown`, dan pesan umum agar pengguna dapat mencoba kembali. Detail error dicatat di terminal untuk membantu debugging.
+
+Untuk pengecekan tiket yang tidak ditemukan, aplikasi mengembalikan pesan informatif dari fungsi tool. Input kosong juga ditangani oleh router. Penanganan error ini merupakan mekanisme dasar dan belum membedakan setiap jenis kegagalan teknis secara spesifik.
 
 ## 9. Konfigurasi Environment Variables
 Aplikasi menggunakan environment variables untuk menyimpan konfigurasi API key dan model.
@@ -280,20 +284,14 @@ Contoh pengecekan status tiket:
 ```powershell
 
 $body = @{
-
-    query = "Cek status tiket TICKET-0001"
-
+    query = "Cek status tiket TICKET-0001"
 } | ConvertTo-Json
 
 Invoke-RestMethod `
-
-    -Uri "http://127.0.0.1:8000/ask" `
-
-    -Method Post `
-
-    -ContentType "application/json" `
-
-    -Body $body
+    -Uri "http://127.0.0.1:8000/ask" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body $body
 
 ```
 
@@ -331,17 +329,11 @@ Uji FAQ dan pengecekan tiket melalui endpoint `/ask` menggunakan contoh perintah
 Pengujian berikut telah dilakukan melalui endpoint `/ask` pada aplikasi yang berjalan di Docker.
 
 | No. | Skenario | Query | Hasil |
-
 |---|---|---|---|
-
 | 1 | Tiket tersedia | `Cek status tiket TICKET-0001` | Berhasil. Intent `ticket_status`; informasi tiket dikembalikan. |
-
 | 2 | Tiket tidak ditemukan | `Cek status tiket TICKET-9999` | Berhasil diproses. Aplikasi menyampaikan bahwa tiket tidak ditemukan. |
-
 | 3 | Pertanyaan FAQ | `Bagaimana cara reset password VPN perusahaan?` | Berhasil. Intent `faq`; jawaban terkait reset password VPN dihasilkan. |
-
 | 4 | Pertanyaan FAQ dengan ungkapan berbeda | `Saya lupa kata sandi VPN dan tidak bisa masuk` | Berhasil. Intent `faq`; sistem menghasilkan jawaban relevan melalui jalur RAG. |
-
 | 5 | Pertanyaan di luar cakupan | `Tolong buatkan jadwal liburan ke Bali` | Aplikasi menyatakan bahwa informasi tersebut tidak tersedia dalam knowledge base. |
 
 ### Observasi hasil pengujian
@@ -356,6 +348,24 @@ Pengujian berikut telah dilakukan melalui endpoint `/ask` pada aplikasi yang ber
 - Pertanyaan dengan susunan kata berbeda tetap dapat memperoleh jawaban relevan melalui semantic search.
 
 - Pertanyaan di luar cakupan belum dikenali sebagai intent terpisah. Router mengarahkannya ke RAG, sehingga sistem masih bergantung pada kemampuan retrieval dan respons model untuk menyatakan keterbatasan informasi.
+
+### Automated Testing
+
+Automated testing dilakukan menggunakan `pytest` untuk memeriksa beberapa fungsi utama aplikasi.
+
+| File Test | Skenario | Hasil |
+|---|---|---|
+| `test_error_handling.py` | Memastikan endpoint `/ask` menangani simulasi error internal dengan respons terstruktur. | PASSED |
+| `test_semantic_search.py` | Memastikan semantic search menghasilkan FAQ dengan informasi dan skor relevansi. | PASSED |
+| `test_tools.py` | Memastikan fungsi pengecekan tiket menangani tiket yang tersedia dan tidak ditemukan. | 2 PASSED |
+
+Seluruh 4 automated test berhasil dijalankan menggunakan perintah:
+
+```powershell
+python -m pytest -v
+```
+
+Pengujian ini melengkapi pengujian endpoint yang dilakukan sebelumnya. Cakupan automated test masih terbatas pada skenario yang telah didefinisikan dan belum mencakup seluruh kemungkinan kondisi aplikasi.
 
 ## 13. Keterbatasan Sistem
 - Knowledge base dan data tiket masih menggunakan dataset CSV yang disediakan sebagai data simulasi.
