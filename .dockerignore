@@ -1,0 +1,16 @@
+# File rahasia: jangan masukkan API key ke Docker image
+.env
+
+# Virtual environment Python
+.venv/
+venv/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+
+# File Git
+.git/
+
+# File cache dan konfigurasi lokal
+.vscode/
